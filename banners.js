@@ -2,13 +2,20 @@
   if(window.__tvbInit) return;
   window.__tvbInit = true;
 
-  function getBadge(){ return document.querySelector('.t706__carticon-counter'); }
-  function getCartCount(){ var b = getBadge(); return b ? (parseInt(b.textContent)||0) : 0; }
+  function getBadge(){
+    return document.querySelector('.t706__carticon-counter');
+  }
+  function getCartCount(){
+    var b = getBadge();
+    return b ? (parseInt(b.textContent) || 0) : 0;
+  }
 
   var b1 = document.getElementById('tvb');
   var b2 = document.getElementById('tvb2');
-  var b1timer = null, b2timer = null;
-  var b1visible = false, b2visible = false;
+  var b1timer = null;
+  var b2timer = null;
+  var b1visible = false;
+  var b2visible = false;
 
   function b1show(){
     if(b1visible) return;
@@ -25,6 +32,7 @@
     b1.classList.remove('tvb-show');
     setTimeout(function(){ b1.style.visibility = 'hidden'; }, 400);
   }
+
   function b2show(){
     if(b2visible) return;
     if(sessionStorage.getItem('tvb2_shown')) return;
@@ -65,7 +73,9 @@
       pcls.indexOf('t-store__btn-buy') !== -1 ||
       pcls.indexOf('t744__btn') !== -1 ||
       pcls.indexOf('t706__product-plus') !== -1;
+
     if(!found) return;
+
     setTimeout(function(){
       var n = getCartCount();
       if(n === 1) b1show();
@@ -75,7 +85,7 @@
 
   function watchBadge(badge){
     var obs = new MutationObserver(function(){
-      if((parseInt(badge.textContent)||0) === 0){
+      if((parseInt(badge.textContent) || 0) === 0){
         sessionStorage.removeItem('tvb_shown');
         sessionStorage.removeItem('tvb2_shown');
         b1visible = false;
@@ -89,7 +99,7 @@
     var badge = getBadge();
     if(badge){
       watchBadge(badge);
-      if((parseInt(badge.textContent)||0) === 0){
+      if((parseInt(badge.textContent) || 0) === 0){
         sessionStorage.removeItem('tvb_shown');
         sessionStorage.removeItem('tvb2_shown');
       }
@@ -103,64 +113,4 @@
   }
 
   setTimeout(init, 500);
-
-  // ─── Мини-баннер в корзине ─────────────────────────────────────
-  window.__cartBannerInit = true;
-
-  var H1 = '<div class="cdlv-icon"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><rect x="4" y="16" width="34" height="22" rx="3" stroke="white" stroke-width="2" fill="none"/><path d="M38 24 L38 38 L56 38 L56 28 Q54 16 46 16 L38 16 Z" stroke="white" stroke-width="2" fill="none"/><circle cx="18" cy="40" r="5" stroke="white" stroke-width="2" fill="none"/><circle cx="46" cy="40" r="5" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="cdlv-text"><strong>Добавьте ещё 1 товар</strong>и получите бесплатную доставку по всей России</div>';
-  var H2 = '<div class="cdlv-icon"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><circle cx="30" cy="30" r="26" stroke="white" stroke-width="2" opacity="0.3"/><polyline points="14,31 25,42 46,20" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cdlv-text"><strong>Бесплатная доставка!</strong>Ваш заказ доставим бесплатно по всей России</div>';
-
-  var css = '#cart-dlv-banner{width:100%;box-sizing:border-box;border-radius:10px;padding:0 16px;height:60px;display:flex;align-items:center;gap:12px;margin-bottom:8px;overflow:hidden;transition:background 0.4s ease}'
-    + '#cart-dlv-banner.dlv-one{background:linear-gradient(100deg,#1c1c1a 0%,#1c1c1a 50%,#6b2500 100%)}'
-    + '#cart-dlv-banner.dlv-two{background:linear-gradient(100deg,#1c1c1a 0%,#1c1c1a 50%,#1a4a1a 100%)}'
-    + '#cart-dlv-banner .cdlv-icon{flex-shrink:0;display:flex;align-items:center}'
-    + '#cart-dlv-banner .cdlv-text{flex:1;font-size:12px;color:#ccc;line-height:1.4}'
-    + '#cart-dlv-banner .cdlv-text strong{display:block;font-size:13px;font-weight:700;margin-bottom:1px}'
-    + '#cart-dlv-banner.dlv-one .cdlv-text strong{color:#FF6B35}'
-    + '#cart-dlv-banner.dlv-two .cdlv-text strong{color:#4caf50}';
-
-  var styleEl = document.createElement('style');
-  styleEl.textContent = css;
-  document.head.appendChild(styleEl);
-
-  function updateMiniBanner(n){
-    var cb = document.getElementById('cart-dlv-banner');
-    if(!cb) return;
-    cb.className = n >= 2 ? 'dlv-two' : 'dlv-one';
-    cb.innerHTML = n >= 2 ? H2 : H1;
-  }
-
-  function injectMiniBanner(){
-    if(document.getElementById('cart-dlv-banner')){ updateMiniBanner(getCartCount()); return; }
-    var rBlock = document.getElementById('rBlock');
-    if(!rBlock) return;
-    var cb = document.createElement('div');
-    cb.id = 'cart-dlv-banner';
-    var n = getCartCount();
-    cb.className = n >= 2 ? 'dlv-two' : 'dlv-one';
-    cb.innerHTML = n >= 2 ? H2 : H1;
-    rBlock.parentNode.insertBefore(cb, rBlock);
-  }
-
-  function watchMiniBadge(){
-    var badge = getBadge();
-    if(!badge){
-      var ob = new MutationObserver(function(){
-        var b = getBadge();
-        if(b){ ob.disconnect(); watchMiniBadge(); }
-      });
-      ob.observe(document.body, {childList:true, subtree:true});
-      return;
-    }
-    new MutationObserver(function(){ updateMiniBanner(getCartCount()); })
-      .observe(badge, {childList:true, subtree:true, characterData:true});
-  }
-
-  new MutationObserver(function(){
-    if(document.getElementById('rBlock')) injectMiniBanner();
-  }).observe(document.body, {childList:true, subtree:true});
-
-  if(document.getElementById('rBlock')) injectMiniBanner();
-  watchMiniBadge();
-
 })();
