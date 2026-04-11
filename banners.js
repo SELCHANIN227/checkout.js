@@ -2,11 +2,9 @@
   if(window.__tvbInit) return;
   window.__tvbInit = true;
 
-  // ─── Вспомогательные ───────────────────────────────────────────
   function getBadge(){ return document.querySelector('.t706__carticon-counter'); }
   function getCartCount(){ var b = getBadge(); return b ? (parseInt(b.textContent)||0) : 0; }
 
-  // ─── Баннер 1 и 2 ──────────────────────────────────────────────
   var b1 = document.getElementById('tvb');
   var b2 = document.getElementById('tvb2');
   var b1timer = null, b2timer = null;
@@ -107,7 +105,6 @@
   setTimeout(init, 500);
 
   // ─── Мини-баннер в корзине ─────────────────────────────────────
-  if(window.__cartBannerInit) return;
   window.__cartBannerInit = true;
 
   var H1 = '<div class="cdlv-icon"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><rect x="4" y="16" width="34" height="22" rx="3" stroke="white" stroke-width="2" fill="none"/><path d="M38 24 L38 38 L56 38 L56 28 Q54 16 46 16 L38 16 Z" stroke="white" stroke-width="2" fill="none"/><circle cx="18" cy="40" r="5" stroke="white" stroke-width="2" fill="none"/><circle cx="46" cy="40" r="5" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="cdlv-text"><strong>Добавьте ещё 1 товар</strong>и получите бесплатную доставку по всей России</div>';
