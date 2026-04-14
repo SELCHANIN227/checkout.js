@@ -868,9 +868,9 @@ function reorder(){
   pr.appendChild(r);
   pr.appendChild(d);
   pr.appendChild(p);
-  if(tot){
   var disc=document.getElementById('discountInfo');
-  if(disc)pr.insertBefore(disc,tot);
+  if(disc)pr.appendChild(disc);
+  if(tot){
     pr.appendChild(tot);
     tot.style.setProperty('display','block','important');
     tot.style.setProperty('opacity','1','important');
