@@ -108,14 +108,16 @@ var pH='<div class="cst-block payment-block" id="pBlock">'
 +'<div class="pay-opt" data-p="card"><div class="pay-radio"><div class="pay-dot"></div></div><div class="pay-label">Банковской картой<span>доступно для всех способов доставки</span></div></div>'
 +'<div class="pay-opt" data-p="qr" id="payQR"><div class="pay-radio"><div class="pay-dot"></div></div><div class="pay-label">QR-кодом<span>доступно для всех способов доставки</span></div><div class="pay-discount-badge">Скидка 3%</div></div>'
 +'<div class="pay-opt" data-p="cash" id="payCash" style="min-height:62px;"><div class="pay-radio"><div class="pay-dot"></div></div><div class="pay-label" style="display:flex;align-items:center;">Наличными при получении</div></div>'
-+'<div class="cst-promo-block" id="promoBlock">'
-+'<div class="cst-promo-toggle" id="promoToggle"><span class="cst-promo-toggle-icon">🏷</span> У меня есть промокод</div>'
++'<div class="promo-block">'
++'<div class="cst-block cst-promo-block" id="promoBlock">'
++'<div class="cst-title">Промокод</div>'
 +'<div class="cst-promo-field" id="promoField">'
 +'<div class="cst-promo-input-wrap">'
 +'<input type="text" placeholder="Введите промокод" id="promoInput" autocomplete="off" spellcheck="false"/>'
 +'<button type="button" class="cst-promo-btn" id="promoBtn">Применить</button>'
 +'</div>'
 +'<div class="cst-promo-msg" id="promoMsg"></div>'
++'</div>'
 +'</div>'
 +'</div>'
 +'<div class="cst-discount-info" id="discountInfo"></div>'
@@ -146,29 +148,23 @@ function getTotalDiscountPercent(){
 
 /* ===== Промокод UI ===== */
 function initPromo(){
-  var toggle=document.getElementById('promoToggle');
-  var field=document.getElementById('promoField');
   var inp=document.getElementById('promoInput');
   var btn=document.getElementById('promoBtn');
   var msg=document.getElementById('promoMsg');
-  if(!toggle||!field||!inp||!btn||!msg)return;
-
-  toggle.addEventListener('click',function(){
-    var open=field.classList.toggle('visible');
-    toggle.classList.toggle('open',open);
-    if(open)setTimeout(function(){inp.focus();},150);
-  });
+  if(!inp||!btn||!msg)return;
 
   function tryApply(){
     var code=inp.value.trim().toUpperCase();
     if(!code){
+      inp.classList.add('cst-err');
       msg.textContent='Введите промокод';
       msg.className='cst-promo-msg cst-promo-err visible';
       return;
     }
     var found=USER_PROMOS[code];
     if(!found){
-      msg.textContent='Промокод не найден';
+      inp.classList.add('cst-err');
+      msg.textContent='Промокод «'+code+'» не найден';
       msg.className='cst-promo-msg cst-promo-err visible';
       _userPromo=null;
       _userPromoApplied=false;
@@ -177,11 +173,12 @@ function initPromo(){
     }
     _userPromo={code:code,percent:found.percent,label:found.label,soloTilda:found.soloTilda,qrCombo:found.qrCombo};
     _userPromoApplied=true;
-    msg.innerHTML='✓ Промокод <b>'+code+'</b> применён! Скидка '+found.label;
-    msg.className='cst-promo-msg cst-promo-ok visible';
     inp.disabled=true;
+    inp.classList.remove('cst-err');
     btn.textContent='Отменить';
     btn.classList.add('cst-promo-cancel');
+    msg.innerHTML='✓ Промокод <b>'+code+'</b> применён! Скидка '+found.label;
+    msg.className='cst-promo-msg cst-promo-ok visible';
     updDiscount();
     saveState();
   }
@@ -191,6 +188,7 @@ function initPromo(){
     _userPromoApplied=false;
     inp.disabled=false;
     inp.value='';
+    inp.classList.remove('cst-err');
     btn.textContent='Применить';
     btn.classList.remove('cst-promo-cancel');
     msg.className='cst-promo-msg';
@@ -202,6 +200,11 @@ function initPromo(){
   btn.addEventListener('click',function(){
     if(_userPromoApplied)cancelPromo();
     else tryApply();
+  });
+  inp.addEventListener('input',function(){
+    inp.classList.remove('cst-err');
+    msg.className='cst-promo-msg';
+    msg.textContent='';
   });
   inp.addEventListener('keydown',function(e){
     if(e.key==='Enter'){e.preventDefault();tryApply();}
@@ -507,12 +510,10 @@ function restoreState(){
     var btn=document.getElementById('promoBtn');
     var msg=document.getElementById('promoMsg');
     var field=document.getElementById('promoField');
-    var toggle=document.getElementById('promoToggle');
     if(inp){inp.value=d.prCode;inp.disabled=true;}
     if(btn){btn.textContent='Отменить';btn.classList.add('cst-promo-cancel');}
     if(msg){msg.innerHTML='✓ Промокод <b>'+d.prCode+'</b> применён! Скидка '+found.label;msg.className='cst-promo-msg cst-promo-ok visible';}
-    if(field)field.classList.add('visible');
-    if(toggle)toggle.classList.add('open');
+    /* поле видимо всегда, ничего не нужно */
   }
   updDiscount();
 }
