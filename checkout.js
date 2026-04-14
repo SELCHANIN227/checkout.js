@@ -423,13 +423,6 @@ function validate(){
     if(aerr)aerr.classList.add('visible');
   }
 
-  /* === ДИАГНОСТИКА === */
-  console.log('=== VALIDATE ===');
-  console.log('ok:', ok);
-  console.log('fails:', fails.join(' | '));
-  alert('Валидация: '+(ok?'OK':'FAIL')+'\n'+fails.join('\n'));
-  /* === КОНЕЦ ДИАГНОСТИКИ === */
-
   if(!ok&&valErr){
     valErr.classList.add('visible');
     setTimeout(function(){
