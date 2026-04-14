@@ -361,58 +361,73 @@ function updDiscount(){
 
 function validate(){
   var ok=true;
+  var fails=[];
   var valErr=document.getElementById('cstValErr');
   if(valErr)valErr.classList.remove('visible');
   var nm=document.getElementById('r_name');
   var em=document.getElementById('r_email');
   var ph=document.getElementById('r_phone');
   var pw=document.getElementById('phoneWrap');
-  if(!nm||!em||!ph||!pw)return false;
-  if(!nm.value.trim()){nm.classList.add('cst-err');ok=false;}else nm.classList.remove('cst-err');
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.value.trim())){em.classList.add('cst-err');ok=false;}else em.classList.remove('cst-err');
-  if(ph.value.replace(/\D/g,'').length<cc.ml){pw.classList.add('cst-err');ok=false;}else pw.classList.remove('cst-err');
+  if(!nm||!em||!ph||!pw){fails.push('ЭЛЕМЕНТЫ НЕ НАЙДЕНЫ: nm='+!!nm+' em='+!!em+' ph='+!!ph+' pw='+!!pw);return false;}
+  if(!nm.value.trim()){nm.classList.add('cst-err');ok=false;fails.push('name пустое');}else nm.classList.remove('cst-err');
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.value.trim())){em.classList.add('cst-err');ok=false;fails.push('email: "'+em.value+'"');}else em.classList.remove('cst-err');
+  var phDigits=ph.value.replace(/\D/g,'');
+  if(phDigits.length<cc.ml){pw.classList.add('cst-err');ok=false;fails.push('phone: digits='+phDigits.length+' need='+cc.ml+' raw="'+ph.value+'"');}else pw.classList.remove('cst-err');
   var ac=document.querySelector('.dlv-opt.active');
   if(!ac){
-    ok=false;
+    ok=false;fails.push('доставка не выбрана');
     document.querySelectorAll('.dlv-opt').forEach(function(o){
       o.classList.add('cst-err');
       setTimeout(function(){o.classList.remove('cst-err');},3000);
     });
   }else{
     var ty=ac.getAttribute('data-d');
+    fails.push('доставка: '+ty);
     if(ty==='tk'){
       var sl=document.getElementById('selTK');
       if(!sl||!sl.value){
-        ok=false;
+        ok=false;fails.push('ТК не выбрана');
         if(sl){sl.classList.add('cst-err');setTimeout(function(){sl.classList.remove('cst-err');},3000);}
       }else{
         var sa=document.querySelector('.dlv-sub-o.active');
         var st=sa?sa.getAttribute('data-ts'):'pvz';
-        if(st==='pvz'){var pvzEl=document.getElementById('i_pvz');if(!pvzEl||!pvzEl.value.trim()){ok=false;if(pvzEl)pvzEl.classList.add('cst-err');}}
-        else{var tkcEl=document.getElementById('i_tkc');if(!tkcEl||!tkcEl.value.trim()){ok=false;if(tkcEl)tkcEl.classList.add('cst-err');}}
+        fails.push('ТК sub: '+st);
+        if(st==='pvz'){var pvzEl=document.getElementById('i_pvz');if(!pvzEl||!pvzEl.value.trim()){ok=false;fails.push('pvz пустой');if(pvzEl)pvzEl.classList.add('cst-err');}}
+        else{var tkcEl=document.getElementById('i_tkc');if(!tkcEl||!tkcEl.value.trim()){ok=false;fails.push('tkc пустой');if(tkcEl)tkcEl.classList.add('cst-err');}}
       }
     }
     if(ty==='courier'){
       var strEl=document.getElementById('i_str');
       var houEl=document.getElementById('i_hou');
-      if(!strEl||!strEl.value.trim()){ok=false;if(strEl)strEl.classList.add('cst-err');}
-      if(!houEl||!houEl.value.trim()){ok=false;if(houEl)houEl.classList.add('cst-err');}
+      if(!strEl||!strEl.value.trim()){ok=false;fails.push('улица пустая');if(strEl)strEl.classList.add('cst-err');}
+      if(!houEl||!houEl.value.trim()){ok=false;fails.push('дом пустой');if(houEl)houEl.classList.add('cst-err');}
     }
   }
-  if(!document.querySelector('.pay-opt.active')){
-    ok=false;
+  var payActive=document.querySelector('.pay-opt.active');
+  if(!payActive){
+    ok=false;fails.push('оплата не выбрана');
     document.querySelectorAll('.pay-opt:not(.pay-disabled)').forEach(function(o){
       o.classList.add('cst-err');
       setTimeout(function(){o.classList.remove('cst-err');},3000);
     });
+  }else{
+    fails.push('оплата: '+payActive.getAttribute('data-p'));
   }
   if(!agreeChecked){
-    ok=false;
+    ok=false;fails.push('согласие не дано');
     var abox=document.getElementById('agreeBox');
     var aerr=document.getElementById('agreeErr');
     if(abox)abox.classList.add('cst-err');
     if(aerr)aerr.classList.add('visible');
   }
+
+  /* === ДИАГНОСТИКА === */
+  console.log('=== VALIDATE ===');
+  console.log('ok:', ok);
+  console.log('fails:', fails.join(' | '));
+  alert('Валидация: '+(ok?'OK':'FAIL')+'\n'+fails.join('\n'));
+  /* === КОНЕЦ ДИАГНОСТИКИ === */
+
   if(!ok&&valErr){
     valErr.classList.add('visible');
     setTimeout(function(){
