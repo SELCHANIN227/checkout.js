@@ -918,52 +918,75 @@ function reorder(){
 }
 
 function inject(){
-  if(!validate())return false;
+  console.log('=== INJECT START ===');
+  if(!validate()){console.log('INJECT: validate failed');return false;}
   var d=getDD();
-  if(!d)return false;
+  if(!d){console.log('INJECT: getDD returned null');return false;}
+  console.log('INJECT: data=', JSON.stringify(d));
+  
+  var form=document.getElementById(FORM_ID);
+  console.log('INJECT: form found=', !!form, 'FORM_ID=', FORM_ID);
+  if(form){
+    var allInputs=form.querySelectorAll('input,textarea');
+    console.log('INJECT: form inputs count=', allInputs.length);
+    allInputs.forEach(function(inp){
+      console.log('  input name="'+inp.name+'" value="'+inp.value+'"');
+    });
+  }
+  
   var ok=fillTildaForm(d);
+  console.log('INJECT: fillTildaForm result=', ok);
   if(!ok){console.warn('Форма не найдена');return false;}
   _injecting=true;
   var hasPromo=!!d.promoCode;
+  console.log('INJECT: promoCode=', d.promoCode, 'hasPromo=', hasPromo);
 
-  /* Скрываем Tilda промо-блок чтобы не мелькал */
+  /* Скрываем Tilda промо-блок */
   var tildaPromoWrap=document.querySelector('.t706__cartwin-prodesc-wrapper,.t-inputpromocode__wrapper,.t706__cartwin-promocode');
   if(tildaPromoWrap)tildaPromoWrap.style.cssText='position:absolute!important;opacity:0!important;pointer-events:none!important;height:0!important;overflow:hidden!important;';
 
   function doSubmit(){
-    var form=document.getElementById(FORM_ID);
-    if(!form){_injecting=false;return;}
-    var btn=form.querySelector('button.t-submit,button[type="submit"]');
+    console.log('=== doSubmit ===');
+    var form2=document.getElementById(FORM_ID);
+    if(!form2){console.log('doSubmit: form NOT FOUND');_injecting=false;return;}
+    var btn=form2.querySelector('button.t-submit,button[type="submit"]');
+    console.log('doSubmit: button found=', !!btn);
     if(!btn){_injecting=false;return;}
+    
+    console.log('doSubmit: button text=', btn.textContent, 'display=', btn.style.display, 'visibility=', btn.style.visibility);
     btn.style.cssText='';
+    console.log('doSubmit: clicking button...');
     btn.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));
+    console.log('doSubmit: click dispatched');
+    
     setTimeout(function(){
       hideTildaSubmit();
       _injecting=false;
+      console.log('doSubmit: cleanup done');
     },3000);
   }
 
   if(hasPromo){
-    /* Применяем промокод Tilda */
     applyFinalPromo();
-
-    /* Ждём пока Tilda применит промокод, потом отправляем */
     var attempts=0;
     var waitPromo=setInterval(function(){
       attempts++;
+      console.log('waitPromo attempt:', attempts);
       var promoResult=document.querySelector('.t-inputpromocode__text-success,.t-inputpromocode__applied');
       var promoErr=document.querySelector('.t-inputpromocode__text-error');
       if(promoResult||attempts>30){
         clearInterval(waitPromo);
+        console.log('waitPromo: done, promoResult=', !!promoResult);
         setTimeout(doSubmit,300);
       }
       if(promoErr&&attempts>5){
-        /* Если промокод не применился — всё равно отправляем */
         clearInterval(waitPromo);
+        console.log('waitPromo: error, submitting anyway');
         setTimeout(doSubmit,300);
       }
     },200);
   }else{
+    console.log('INJECT: no promo, submitting directly');
     setTimeout(doSubmit,150);
   }
 
