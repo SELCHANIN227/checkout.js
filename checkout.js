@@ -899,6 +899,7 @@ function reorder(){
     of.style.setProperty('position','static','important');
     of.style.setProperty('pointer-events','auto','important');
   }
+  startCartObserver();
   reord=true;
   hideTildaSubmit();
 }
@@ -987,12 +988,12 @@ document.addEventListener('click',function(e){
 
 var ob=new MutationObserver(function(mu){
   if(_focused)return;
-  var need=false;
-  for(var i=0;i<mu.length;i++){if(mu[i].addedNodes.length>0){need=true;break;}}
-  if(!need)return;
-  if(!document.getElementById('rBlock')||!document.getElementById('dBlock')||!document.getElementById('pBlock')){
-    ins=false;mi=false;reord=false;
-  }
+  if(_injecting)return;
+  var r=document.getElementById('rBlock');
+  var d=document.getElementById('dBlock');
+  var p=document.getElementById('pBlock');
+  if(r&&d&&p)return;
+  ins=false;mi=false;reord=false;
   tryIns();
 });
 
@@ -1005,6 +1006,37 @@ var scrollOb=new MutationObserver(function(){
   if(document.documentElement.style.overflowY==='hidden')document.documentElement.style.overflowY='';
   if(document.body.classList.contains('t-body_popupopened'))document.body.classList.remove('t-body_popupopened');
 });
+
+/* === Слежение за изменением суммы при +/- === */
+var _cartOb=new MutationObserver(function(){
+  if(!ins)return;
+  var totalEl=document.querySelector('.t706__cartwin-totalamount');
+  if(!totalEl)return;
+  function parseSum(str){return parseInt((str||'').replace(/\s/g,'').replace(/[^\d]/g,''))||0;}
+  var cur=parseSum(totalEl.textContent);
+  if(cur>0&&cur!==_origPrice){
+    var pa=document.querySelector('.pay-opt.active');
+    var isQR=pa&&pa.getAttribute('data-p')==='qr';
+    var hasAnyDisc=(_userPromo&&_userPromoApplied)||isQR;
+    if(!hasAnyDisc){
+      _origPrice=cur;
+      updDiscount();
+    }else{
+      var expected=_origPrice-Math.round(_origPrice*getTotalDiscountPercent());
+      if(cur!==expected){
+        _origPrice=cur;
+        updDiscount();
+      }
+    }
+  }
+});
+
+function startCartObserver(){
+  var totalEl=document.querySelector('.t706__cartwin-totalamount');
+  if(totalEl){
+    _cartOb.observe(totalEl,{childList:true,characterData:true,subtree:true});
+  }
+}
 
 function startObservers(){
   if(!document.body)return;
@@ -1029,6 +1061,14 @@ window.addEventListener('resize',function(){
 
 if(document.body){startObservers();}
 else{document.addEventListener('DOMContentLoaded',startObservers);}
+
+setInterval(function(){
+  var totalEl=document.querySelector('.t706__cartwin-totalamount');
+  if(totalEl&&!totalEl._cartObStarted){
+    startCartObserver();
+    totalEl._cartObStarted=true;
+  }
+},1000);
 
 tryIns();
 var ci=setInterval(function(){
