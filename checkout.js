@@ -413,10 +413,12 @@ function validate(){
   }else{
     fails.push('оплата: '+payActive.getAttribute('data-p'));
   }
-  if(!agreeChecked){
+  var abox=document.getElementById('agreeBox');
+  var aerr=document.getElementById('agreeErr');
+  var agreeReal=abox&&abox.classList.contains('checked');
+  if(agreeReal)agreeChecked=true;
+  if(!agreeReal){
     ok=false;fails.push('согласие не дано');
-    var abox=document.getElementById('agreeBox');
-    var aerr=document.getElementById('agreeErr');
     if(abox)abox.classList.add('cst-err');
     if(aerr)aerr.classList.add('visible');
   }
