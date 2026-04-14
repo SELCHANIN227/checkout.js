@@ -238,27 +238,21 @@
   }
 }
 /* ===== ПРОМОКОД ===== */
-.cst-promo-block{margin:16px 0 12px}
-.cst-promo-toggle{color:#FF6B35;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:6px 0;transition:opacity .2s;user-select:none}
-.cst-promo-toggle:hover{opacity:.8}
-.cst-promo-toggle.open{margin-bottom:8px}
-.cst-promo-toggle-icon{font-size:16px}
-.cst-promo-field{display:none;animation:cstFadeIn .3s ease}
-.cst-promo-field.visible{display:block}
+.cst-promo-block{margin:0;padding:0}
+.cst-promo-field{animation:dFade .3s ease}
 .cst-promo-input-wrap{display:flex;gap:8px;align-items:stretch}
-.cst-promo-input-wrap input{flex:1;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:14px;padding:10px 14px;outline:none;transition:border-color .2s;font-family:inherit}
+.cst-promo-input-wrap input{flex:1;width:100%;height:60px;padding:0 14px;background:transparent;color:#fff;border:1px solid #444;border-radius:10px;font-size:14px;outline:none;transition:border-color .25s;box-sizing:border-box;font-family:inherit}
 .cst-promo-input-wrap input:focus{border-color:#FF6B35}
+.cst-promo-input-wrap input::placeholder{color:#666}
 .cst-promo-input-wrap input:disabled{opacity:.6;cursor:not-allowed}
-.cst-promo-btn{background:#FF6B35;color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .2s,transform .1s;font-family:inherit}
+.cst-promo-input-wrap input.cst-err{border-color:#ff4444!important}
+.cst-promo-btn{height:60px;background:#FF6B35;color:#fff;border:none;border-radius:10px;padding:0 20px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .2s,transform .1s;font-family:inherit}
 .cst-promo-btn:hover{background:#e55a28}
 .cst-promo-btn:active{transform:scale(.97)}
-.cst-promo-btn.cst-promo-cancel{background:transparent;border:1px solid #555;color:#aaa}
+.cst-promo-btn.cst-promo-cancel{height:60px;background:transparent;border:1px solid #555;color:#aaa}
 .cst-promo-btn.cst-promo-cancel:hover{border-color:#888;color:#fff}
 .cst-promo-msg{font-size:13px;margin-top:8px;display:none;padding:8px 12px;border-radius:6px;line-height:1.4}
 .cst-promo-msg.visible{display:block}
 .cst-promo-msg.cst-promo-ok{background:rgba(76,175,80,.12);color:#66bb6a;border:1px solid rgba(76,175,80,.25)}
 .cst-promo-msg.cst-promo-err{background:rgba(244,67,54,.1);color:#ef5350;border:1px solid rgba(244,67,54,.2)}
-.cst-discount-info{display:none;background:rgba(76,175,80,.08);border:1px solid rgba(76,175,80,.2);border-radius:10px;padding:12px 16px;margin:12px 0 8px;font-size:13px;color:#66bb6a;line-height:1.6}
-.cst-discount-info.visible{display:block}
-.cst-discount-info strong{color:#81c784;display:block;margin-top:4px;padding-top:6px;border-top:1px solid rgba(76,175,80,.15)}
-@keyframes cstFadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.promo-block{margin-bottom:50px}
