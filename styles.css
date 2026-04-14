@@ -255,4 +255,7 @@
 .cst-promo-msg.visible{display:block}
 .cst-promo-msg.cst-promo-ok{background:rgba(76,175,80,.12);color:#66bb6a;border:1px solid rgba(76,175,80,.25)}
 .cst-promo-msg.cst-promo-err{background:rgba(244,67,54,.1);color:#ef5350;border:1px solid rgba(244,67,54,.2)}
-.promo-block{margin-bottom:50px}
+.promo-block{margin-top:50px;margin-bottom:50px}
+.cst-discount-info{display:none;margin:12px 0 8px;font-size:14px;font-family:inherit;color:#66bb6a;line-height:1.8;text-align:right}
+.cst-discount-info.visible{display:block}
+.cst-discount-info strong{color:#81c784;display:block;margin-top:2px}
