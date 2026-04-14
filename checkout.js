@@ -910,6 +910,9 @@ function reorder(){
     of.style.setProperty('pointer-events','auto','important');
   }
   startCartObserver();
+  /* Скрываем нативный промо-блок Tilda */
+  var tpb=document.querySelector('.t706__cartwin-promocode,.t-inputpromocode__wrapper');
+  if(tpb)tpb.style.cssText='position:absolute!important;opacity:0!important;pointer-events:none!important;height:0!important;overflow:hidden!important;';
   reord=true;
   hideTildaSubmit();
 }
@@ -922,21 +925,48 @@ function inject(){
   if(!ok){console.warn('Форма не найдена');return false;}
   _injecting=true;
   var hasPromo=!!d.promoCode;
-  setTimeout(function(){
+
+  /* Скрываем Tilda промо-блок чтобы не мелькал */
+  var tildaPromoWrap=document.querySelector('.t706__cartwin-prodesc-wrapper,.t-inputpromocode__wrapper,.t706__cartwin-promocode');
+  if(tildaPromoWrap)tildaPromoWrap.style.cssText='position:absolute!important;opacity:0!important;pointer-events:none!important;height:0!important;overflow:hidden!important;';
+
+  function doSubmit(){
     var form=document.getElementById(FORM_ID);
     if(!form){_injecting=false;return;}
     var btn=form.querySelector('button.t-submit,button[type="submit"]');
     if(!btn){_injecting=false;return;}
     btn.style.cssText='';
-    if(hasPromo)applyFinalPromo();
-    setTimeout(function(){
-      btn.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));
-    },hasPromo?1500:0);
+    btn.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));
     setTimeout(function(){
       hideTildaSubmit();
       _injecting=false;
     },3000);
-  },150);
+  }
+
+  if(hasPromo){
+    /* Применяем промокод Tilda */
+    applyFinalPromo();
+
+    /* Ждём пока Tilda применит промокод, потом отправляем */
+    var attempts=0;
+    var waitPromo=setInterval(function(){
+      attempts++;
+      var promoResult=document.querySelector('.t-inputpromocode__text-success,.t-inputpromocode__applied');
+      var promoErr=document.querySelector('.t-inputpromocode__text-error');
+      if(promoResult||attempts>30){
+        clearInterval(waitPromo);
+        setTimeout(doSubmit,300);
+      }
+      if(promoErr&&attempts>5){
+        /* Если промокод не применился — всё равно отправляем */
+        clearInterval(waitPromo);
+        setTimeout(doSubmit,300);
+      }
+    },200);
+  }else{
+    setTimeout(doSubmit,150);
+  }
+
   return 'handled';
 }
 
