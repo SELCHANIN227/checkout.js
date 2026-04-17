@@ -321,42 +321,47 @@ function initAgree(){
 }
 
 /* ===== ОБНОВЛЁННЫЙ updDiscount ===== */
-function readTildaTotal(){
-  var totalEl=document.querySelector('.t706__cartwin-totalamount')||document.querySelector('.t706__cartpage-totals-price')||document.querySelector('[class*="cartwin-total"]');
-  if(!totalEl)return null;
-  var raw=totalEl.textContent||'';
-  return parseInt(raw.replace(/\s/g,'').replace(/[^\d]/g,''))||null;
-}
+
+var _updatingPrice=false;
 
 function updDiscount(){
+  if(_updatingPrice)return;
+  _updatingPrice=true;
+
   var info=document.getElementById('discountInfo');
-  if(!info)return;
-  var totalEl=document.querySelector('.t706__cartwin-totalamount')||document.querySelector('.t706__cartpage-totals-price')||document.querySelector('[class*="cartwin-total"]');
-  if(!totalEl)return;
+  if(!info){_updatingPrice=false;return;}
 
-  /* Всегда читаем актуальную сумму из Tilda, если скидка ещё не применена */
-  var curText=totalEl.textContent||'';
-  var curVal=parseInt(curText.replace(/\s/g,'').replace(/[^\d]/g,''))||0;
-
-  /* Определяем: если сейчас нет скидки, curVal = базовая цена.
-     Если скидка уже показана, _origPrice хранит базу */
-  var discActive=info.classList.contains('visible');
-
-  if(!discActive&&curVal>0){
-    _origPrice=curVal;
-  }
-  /* Если _origPrice так и не установлена */
-  if(!_origPrice||_origPrice<=0){
-    if(curVal>0)_origPrice=curVal;
-    else return;
-  }
+  var totalEl=document.querySelector('.t706__cartwin-totalamount')
+    ||document.querySelector('.t706__cartpage-totals-price')
+    ||document.querySelector('[class*="cartwin-total"]');
+  if(!totalEl){_updatingPrice=false;return;}
 
   var pa=document.querySelector('.pay-opt.active');
   var isQR=pa&&pa.getAttribute('data-p')==='qr';
+  var hasPromo=_userPromo&&_userPromoApplied;
+
+  /* Если ни одной скидки нет — восстановить базовую цену */
+  if(!hasPromo&&!isQR){
+    info.classList.remove('visible');
+    info.innerHTML='';
+    if(_origPrice&&_origPrice>0){
+      totalEl.textContent=_origPrice.toLocaleString('ru-RU')+' р.';
+    }
+    _updatingPrice=false;
+    return;
+  }
+
+  /* Если _origPrice ещё не установлена, берём текущую */
+  if(!_origPrice||_origPrice<=0){
+    var cur=parseInt((totalEl.textContent||'').replace(/\s/g,'').replace(/[^\d]/g,''))||0;
+    if(cur<=0){_updatingPrice=false;return;}
+    _origPrice=cur;
+  }
+
   var lines=[];
   var totalDiscAmt=0;
 
-  if(_userPromo&&_userPromoApplied){
+  if(hasPromo){
     var uDisc=Math.round(_origPrice*_userPromo.percent);
     totalDiscAmt+=uDisc;
     lines.push('Промокод «'+_userPromo.code+'» ('+_userPromo.label+'): −'+uDisc.toLocaleString('ru-RU')+' ₽');
@@ -369,6 +374,7 @@ function updDiscount(){
 
   if(totalDiscAmt>0){
     var fin=_origPrice-totalDiscAmt;
+    if(fin<0)fin=0;
     var pct=Math.round(getTotalDiscountPercent()*100);
     if(lines.length>1){
       lines.push('<strong>Итого скидка '+pct+'%: −'+totalDiscAmt.toLocaleString('ru-RU')+' ₽</strong>');
@@ -376,11 +382,9 @@ function updDiscount(){
     info.innerHTML=lines.join('<br>');
     info.classList.add('visible');
     totalEl.textContent=fin.toLocaleString('ru-RU')+' р.';
-  }else{
-    info.classList.remove('visible');
-    info.innerHTML='';
-    totalEl.textContent=_origPrice.toLocaleString('ru-RU')+' р.';
   }
+
+  _updatingPrice=false;
 }
 
 function validate(){
@@ -951,20 +955,58 @@ function inject(){
   var ok=fillTildaForm(d);
   if(!ok)return false;
   _injecting=true;
+
   var promoCode=d.promoCode;
 
   function doSubmit(){
     var form=document.getElementById(FORM_ID);
     if(!form){_injecting=false;return;}
+
+    /* Пробуем через Tilda API */
+    if(window.tildaForm&&typeof window.tildaForm.send==='function'){
+      try{
+        window.tildaForm.send(form);
+        _injecting=false;
+        return;
+      }catch(e){}
+    }
+
+    /* Fallback: кнопка */
     var btn=form.querySelector('button.t-submit,button[type="submit"]');
     if(!btn){_injecting=false;return;}
-    btn.style.cssText='';
-    btn.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));
+    
+    /* Временно показываем кнопку */
+    var origStyle=btn.style.cssText;
+    btn.style.cssText='position:fixed!important;top:-9999px!important;left:-9999px!important;opacity:0!important;pointer-events:auto!important;height:auto!important;';
+    
     setTimeout(function(){
-      hideTildaSubmit();
-      _injecting=false;
-    },3000);
+      btn.click();
+      setTimeout(function(){
+        btn.style.cssText=origStyle;
+        hideTildaSubmit();
+        _injecting=false;
+      },2000);
+    },50);
   }
+
+  if(promoCode){
+    setTildaPromo(promoCode);
+    var attempts=0;
+    var waitPromo=setInterval(function(){
+      attempts++;
+      var promoOk=document.querySelector('.t-inputpromocode__text-success,.t-inputpromocode__applied');
+      var promoErr=document.querySelector('.t-inputpromocode__text-error');
+      if(promoOk||promoErr||attempts>30){
+        clearInterval(waitPromo);
+        setTimeout(doSubmit,300);
+      }
+    },200);
+  }else{
+    setTimeout(doSubmit,150);
+  }
+
+  return 'handled';
+}
 
   if(promoCode){
     setTildaPromo(promoCode);
