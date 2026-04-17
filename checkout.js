@@ -153,6 +153,11 @@ function initPromo(){
   var msg=document.getElementById('promoMsg');
   if(!inp||!btn||!msg) return;
 
+  function hideGlobalErr(){
+    var valErr=document.getElementById('cstValErr');
+    if(valErr)valErr.classList.remove('visible');
+  }
+
   function tryApply(){
     var code=inp.value.trim().toUpperCase();
     if(!code){
@@ -177,8 +182,9 @@ function initPromo(){
     inp.classList.remove('cst-err');
     btn.textContent='Отменить';
     btn.classList.add('cst-promo-cancel');
-    msg.innerHTML='✓ Промокод <b>'+code+'</b> применён — скидка '+found.label;
+    msg.innerHTML='✓ Промокод <b>'+code+'</b> применён! Скидка '+found.label;
     msg.className='cst-promo-msg cst-promo-ok visible';
+    hideGlobalErr();
     updDiscount();
     saveState();
   }
@@ -189,7 +195,7 @@ function initPromo(){
     inp.classList.remove('cst-err');
     btn.textContent='Применить';
     btn.classList.remove('cst-promo-cancel');
-    msg.className='cst-promo-msg';msg.textContent='';
+    msg.className='cst-promo-msg';msg.textContent='';msg.style.padding='0';
     updDiscount();
     saveState();
   }
@@ -200,7 +206,7 @@ function initPromo(){
   });
   inp.addEventListener('input',function(){
     inp.classList.remove('cst-err');
-    msg.className='cst-promo-msg';msg.textContent='';
+    msg.className='cst-promo-msg';msg.textContent='';msg.style.padding='0';
   });
   inp.addEventListener('keydown',function(e){
     if(e.key==='Enter'){e.preventDefault();tryApply();}
@@ -293,6 +299,8 @@ function initAgree(){
   var wrap=document.getElementById('agreeWrap');
   var box=document.getElementById('agreeBox');
   if(!wrap||!box)return;
+  /* Синхронизация: если box уже checked (после restoreState), выставляем флаг */
+  if(box.classList.contains('checked'))agreeChecked=true;
   wrap.addEventListener('click',function(e){
     if(e.target.tagName==='A')return;
     agreeChecked=!agreeChecked;
@@ -301,6 +309,8 @@ function initAgree(){
       box.classList.remove('cst-err');
       var err=document.getElementById('agreeErr');
       if(err)err.classList.remove('visible');
+      var valErr=document.getElementById('cstValErr');
+      if(valErr)valErr.classList.remove('visible');
     }
     saveState();
   });
@@ -492,6 +502,9 @@ function restoreState(){
     agreeChecked=true;
     var ab=document.getElementById('agreeBox');
     if(ab)ab.classList.add('checked');
+	  /* Повторно синхронизируем agree после всех восстановлений */
+  var agBox=document.getElementById('agreeBox');
+  if(agBox&&agBox.classList.contains('checked'))agreeChecked=true;
   }
   /* Восстановление промокода */
   if(d.prCode&&d.prApplied&&USER_PROMOS[d.prCode]){
