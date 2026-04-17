@@ -1046,7 +1046,7 @@ var successOb=new MutationObserver(function(mu){
   mu.forEach(function(m){
     m.addedNodes.forEach(function(node){
       if(node.nodeType===1){
-        var cn=node.className||'';
+        var cn=(typeof node.className==='string')?node.className:'';
         if(cn.indexOf('t-form__success')!==-1||cn.indexOf('js-send-success')!==-1){
           node.style.display='none';
           showSuccess();
@@ -1056,7 +1056,7 @@ var successOb=new MutationObserver(function(mu){
       }
     });
     if(m.target&&m.target.nodeType===1){
-      var cn2=m.target.className||'';
+      var cn2=(typeof m.target.className==='string')?m.target.className:'';
       if((cn2.indexOf('t-form__success')!==-1||cn2.indexOf('js-send-success')!==-1)&&
          m.target.style.display!=='none'){
         m.target.style.display='none';
@@ -1064,7 +1064,6 @@ var successOb=new MutationObserver(function(mu){
       }
     }
   });
-});
 
 /* ===== Закрытие корзины ===== */
 document.addEventListener('click',function(e){
