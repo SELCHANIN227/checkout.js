@@ -440,8 +440,7 @@ function validate(){
     var aerr=document.getElementById('agreeErr');
     if(abox)abox.classList.add('cst-err');
     if(aerr)aerr.classList.add('visible');
-  }
-  }
+  } 
   if(!ok&&valErr){
     valErr.classList.add('visible');
     setTimeout(function(){
