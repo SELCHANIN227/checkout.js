@@ -1008,29 +1008,6 @@ function inject(){
   return 'handled';
 }
 
-  if(promoCode){
-    setTildaPromo(promoCode);
-    var attempts=0;
-    var waitPromo=setInterval(function(){
-      attempts++;
-      var promoOk=document.querySelector('.t-inputpromocode__text-success,.t-inputpromocode__applied');
-      var promoErr=document.querySelector('.t-inputpromocode__text-error');
-      if(promoOk||attempts>30){
-        clearInterval(waitPromo);
-        setTimeout(doSubmit,300);
-      }
-      if(promoErr&&attempts>5){
-        clearInterval(waitPromo);
-        setTimeout(doSubmit,300);
-      }
-    },200);
-  }else{
-    setTimeout(doSubmit,150);
-  }
-
-  return 'handled';
-}
-
 document.addEventListener('click',function(e){
   if(_injecting)return;
   var b=e.target.closest('button.t-submit,button[type="submit"]');
