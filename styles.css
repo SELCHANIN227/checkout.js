@@ -239,3 +239,28 @@
     bottom: 120px;
   }
 }
+
+/* ===== ПРОМОКОД ===== */
+.cst-promo-wrap{margin:16px 0 8px;padding:0;}
+.cst-promo-title{font-size:14px;font-weight:600;color:#fff;margin-bottom:8px;}
+.cst-promo-row{display:flex;gap:8px;align-items:center;}
+.cst-promo-row input{flex:1;height:42px;padding:0 14px;background:transparent;color:#fff;border:1px solid #444;border-radius:10px;font-size:14px;outline:none;transition:border-color .25s;box-sizing:border-box;font-family:inherit;}
+.cst-promo-row input:focus{border-color:#FF6B35;}
+.cst-promo-row input::placeholder{color:#666;}
+.cst-promo-row input:disabled{opacity:.5;cursor:default;background:rgba(255,255,255,.02);}
+.cst-promo-row input.cst-err{border-color:#ff4444!important;}
+.cst-promo-row button{height:42px;padding:0 20px;background:#FF6B35;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .2s;font-family:inherit;flex-shrink:0;}
+.cst-promo-row button:hover{background:#e55a2b;}
+.cst-promo-row button:active{background:#cc4d22;}
+.cst-promo-row button.cst-promo-cancel{background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.5);height:42px;}
+.cst-promo-row button.cst-promo-cancel:hover{border-color:#ff4444;color:#ff4444;}
+.cst-promo-msg{font-size:12px;line-height:1.5;margin-top:0;max-height:0;overflow:hidden;opacity:0;transition:all .25s ease;}
+.cst-promo-msg.visible{margin-top:8px;max-height:60px;opacity:1;}
+.cst-promo-msg.cst-promo-ok{color:#4CAF50;}
+.cst-promo-msg.cst-promo-err{color:#ff4444;}
+
+/* Скрываем нативный Tilda промо-блок */
+.t706__cartwin-promocode,
+.t-inputpromocode__wrapper,
+.t706__cartwin .t-inputpromocode,
+.t706__cartwin .t-inputpromocode__btn{position:absolute!important;opacity:0!important;pointer-events:none!important;height:0!important;overflow:hidden!important;margin:0!important;padding:0!important;}
