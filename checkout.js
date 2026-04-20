@@ -444,25 +444,6 @@ function getDD(){
   return null;
 }
 
-function fillTildaForm(d){
-  var form=document.getElementById(FORM_ID);
-  if(!form)return false;
-  var fName=form.querySelector('input[name="name"]');if(fName)fName.value=d.nm;
-  var fEmail=form.querySelector('input[name="email"]');if(fEmail)fEmail.value=d.em;
-  var fPhone=form.querySelector('input[name="phone"]');if(fPhone)fPhone.value=d.ph;
-  var dlvText=d.m;
-  if(d.cn)dlvText+=' - '+d.cn;
-  if(d.sm)dlvText+=' ('+d.sm+')';
-  var fDlv=form.querySelector('input[name="delivery"]');if(fDlv)fDlv.value=dlvText;
-  var fAddr=form.querySelector('input[name="address"]');if(fAddr)fAddr.value=d.a||'';
-  var fComm=form.querySelector('input[name="comment"]');
-  if(fComm){var commText='Оплата: '+d.p;if(d.disc)commText+=' | Скидка: '+d.discAmt+' руб. | Итого: '+d.finalSum+' руб.';fComm.value=commText;}
-  var payText='Оплата: '+d.p;
-  if(d.disc)payText+=' | Скидка: '+d.discAmt+' руб. | Итого: '+d.finalSum+' руб.';
-  var fSpec=form.querySelector('[name="form-spec-comments"]');
-  if(fSpec)fSpec.value=d.nm+' | '+d.ph+' | '+d.em+' | '+dlvText+(d.a?' | '+d.a:'')+' | '+payText;
-  return true;
-}
 
 function unlockScroll(){
   document.body.style.overflow='';
@@ -571,6 +552,126 @@ function bindAll(){
   updPay();
 }
 
+function setNativeValue(el, val) {
+  var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+  setter.call(el, val);
+  el.dispatchEvent(new Event('input', {bubbles: true}));
+  el.dispatchEvent(new Event('change', {bubbles: true}));
+  el.dispatchEvent(new Event('blur', {bubbles: true}));
+}
+
+function fillTildaForm(d) {
+  var form = document.getElementById(FORM_ID);
+  if (!form) return false;
+
+  // Временно показываем input-group чтобы Tilda их увидела
+  var groups = form.querySelectorAll('.t-input-group');
+  groups.forEach(function(g) {
+    g.style.setProperty('height', 'auto', 'important');
+    g.style.setProperty('overflow', 'visible', 'important');
+    g.style.setProperty('opacity', '1', 'important');
+    g.style.setProperty('pointer-events', 'auto', 'important');
+  });
+
+  var fName = form.querySelector('input[name="name"]');
+  if (fName) setNativeValue(fName, d.nm);
+
+  var fEmail = form.querySelector('input[name="email"]');
+  if (fEmail) setNativeValue(fEmail, d.em);
+
+  var fPhone = form.querySelector('input[name="phone"]');
+  if (fPhone) setNativeValue(fPhone, d.ph);
+
+  var dlvText = d.m;
+  if (d.cn) dlvText += ' - ' + d.cn;
+  if (d.sm) dlvText += ' (' + d.sm + ')';
+
+  var fDlv = form.querySelector('input[name="delivery"]');
+  if (fDlv) setNativeValue(fDlv, dlvText);
+
+  var fAddr = form.querySelector('input[name="address"]');
+  if (fAddr) setNativeValue(fAddr, d.a || '');
+
+  var fComm = form.querySelector('input[name="comment"]');
+  if (fComm) {
+    var commText = 'Оплата: ' + d.p;
+    if (d.disc) commText += ' | Скидка: ' + d.discAmt + ' руб. | Итого: ' + d.finalSum + ' руб.';
+    if (d.promoCode) commText += ' | Промокод: ' + d.promoCode;
+    setNativeValue(fComm, commText);
+  }
+
+  var payText = 'Оплата: ' + d.p;
+  if (d.disc) payText += ' | Скидка: ' + d.discAmt + ' руб. | Итого: ' + d.finalSum + ' руб.';
+  if (d.promoCode) payText += ' | Промокод: ' + d.promoCode;
+
+  var fSpec = form.querySelector('[name="form-spec-comments"]');
+  if (fSpec) setNativeValue(fSpec, d.nm + ' | ' + d.ph + ' | ' + d.em + ' | ' + dlvText + (d.a ? ' | ' + d.a : '') + ' | ' + payText);
+
+  return true;
+}
+
+function inject() {
+  if (!validate()) return false;
+  var d = getDD();
+  if (!d) return false;
+  var ok = fillTildaForm(d);
+  if (!ok) { console.warn('Форма не найдена'); return false; }
+  _injecting = true;
+
+  setTimeout(function() {
+    var form = document.getElementById(FORM_ID);
+    if (!form) { _injecting = false; return; }
+
+    // Убираем все ошибки Tilda которые могли появиться
+    form.querySelectorAll('.t-input-error').forEach(function(e) { e.style.display = 'none'; });
+    form.querySelectorAll('.js-error-control-box').forEach(function(e) { e.style.display = 'none'; });
+    form.querySelectorAll('.t-form__errorbox-middle').forEach(function(e) { e.style.display = 'none'; });
+
+    var btn = form.querySelector('button.t-submit,button[type="submit"]');
+    if (!btn) { _injecting = false; return; }
+
+    // Полностью разблокируем кнопку
+    btn.style.cssText = 'position:static!important;opacity:1!important;pointer-events:auto!important;height:auto!important;overflow:visible!important;';
+    btn.disabled = false;
+
+    // Также разблокируем input-group на момент отправки
+    var groups = form.querySelectorAll('.t-input-group');
+    groups.forEach(function(g) {
+      g.style.setProperty('height', 'auto', 'important');
+      g.style.setProperty('overflow', 'visible', 'important');
+      g.style.setProperty('opacity', '1', 'important');
+      g.style.setProperty('pointer-events', 'auto', 'important');
+    });
+
+    if (d.disc) applyPromo();
+
+    setTimeout(function() {
+      // Ещё раз перезаписываем значения прямо перед кликом
+      var fName = form.querySelector('input[name="name"]');
+      if (fName) setNativeValue(fName, d.nm);
+      var fEmail = form.querySelector('input[name="email"]');
+      if (fEmail) setNativeValue(fEmail, d.em);
+      var fPhone = form.querySelector('input[name="phone"]');
+      if (fPhone) setNativeValue(fPhone, d.ph);
+
+      btn.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true, view: window}));
+    }, d.disc ? 1500 : 200);
+
+    setTimeout(function() {
+      // Прячем обратно
+      groups.forEach(function(g) {
+        g.style.setProperty('height', '0', 'important');
+        g.style.setProperty('overflow', 'hidden', 'important');
+        g.style.setProperty('opacity', '0', 'important');
+        g.style.setProperty('pointer-events', 'none', 'important');
+      });
+      hideTildaSubmit();
+      _injecting = false;
+    }, 5000);
+  }, 150);
+  return 'handled';
+}
+
 function initDD(iid,sid){
   var inp=document.getElementById(iid);
   var box=document.getElementById(sid);
@@ -656,7 +757,7 @@ function tryIns(){
   var children=Array.prototype.slice.call(ct.children);
   for(var i=0;i<children.length;i++){
     var el=children[i];
-    var cn=el.className||'';
+    var cn=(typeof el.className==='string')?el.className:'';
     if(cn.indexOf('total')!==-1||cn.indexOf('Total')!==-1){tot=el;break;}
     if(el.textContent&&el.textContent.indexOf('Итоговая сумма')!==-1){tot=el;break;}
   }
@@ -744,31 +845,6 @@ function reorder(){
   hideTildaSubmit();
 }
 
-function inject(){
-  if(!validate())return false;
-  var d=getDD();
-  if(!d)return false;
-  var ok=fillTildaForm(d);
-  if(!ok){console.warn('Форма не найдена');return false;}
-  _injecting=true;
-  setTimeout(function(){
-    var form=document.getElementById(FORM_ID);
-    if(!form){_injecting=false;return;}
-    var btn=form.querySelector('button.t-submit,button[type="submit"]');
-    if(!btn){_injecting=false;return;}
-    btn.style.cssText='';
-    if(d.disc)applyPromo();
-    setTimeout(function(){
-      btn.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));
-    },d.disc?1500:0);
-    setTimeout(function(){
-      hideTildaSubmit();
-      _injecting=false;
-    },3000);
-  },150);
-  return 'handled';
-}
-
 document.addEventListener('click',function(e){
   if(_injecting)return;
   var b=e.target.closest('button.t-submit,button[type="submit"]');
@@ -793,7 +869,7 @@ var successOb=new MutationObserver(function(mu){
   mu.forEach(function(m){
     m.addedNodes.forEach(function(node){
       if(node.nodeType===1){
-        var cn=node.className||'';
+        var cn=(typeof node.className==='string')?node.className:'';
         if(cn.indexOf('t-form__success')!==-1||cn.indexOf('js-send-success')!==-1){
           node.style.display='none';
           showSuccess();
@@ -803,7 +879,7 @@ var successOb=new MutationObserver(function(mu){
       }
     });
     if(m.target&&m.target.nodeType===1){
-      var cn2=m.target.className||'';
+      var cn2=(typeof m.target.className==='string')?m.target.className:'';
       if((cn2.indexOf('t-form__success')!==-1||cn2.indexOf('js-send-success')!==-1)&&
          m.target.style.display!=='none'){
         m.target.style.display='none';
