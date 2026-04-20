@@ -414,9 +414,9 @@ function getDD(){
     var ad='';
     if(st==='pvz'){var pvzEl=document.getElementById('i_pvz');ad=pvzEl?pvzEl.value:'';}
     else{var tkcEl=document.getElementById('i_tkc');ad=tkcEl?tkcEl.value:'';}
-    var cn='';
-    if(sl&&sl.selectedIndex>=0&&sl.options[sl.selectedIndex])cn=sl.options[sl.selectedIndex].text;
-    return{ty:ty,m:'ТК',cn:cn,sm:st==='pvz'?'ПВЗ':'Курьер ТК',a:ad,p:pt,disc:disc,discAmt:discAmt,finalSum:finalSum,origSum:origSum,nm:nm,em:em,ph:ph};
+    var tcn='';
+    if(sl&&sl.selectedIndex>=0&&sl.options[sl.selectedIndex])tcn=sl.options[sl.selectedIndex].text;
+    return{ty:ty,m:'ТК',cn:tcn,sm:st==='pvz'?'ПВЗ':'Курьер ТК',a:ad,p:pt,disc:disc,discAmt:discAmt,finalSum:finalSum,origSum:origSum,nm:nm,em:em,ph:ph};
   }
   if(ty==='pickup'){
     return{ty:ty,m:'Самовывоз',cn:'',sm:'',a:'Санкт-Петербург, Полярников 9',p:pt,disc:disc,discAmt:discAmt,finalSum:finalSum,origSum:origSum,nm:nm,em:em,ph:ph};
@@ -428,7 +428,7 @@ function getDD(){
     var flEl=document.getElementById('i_fl');
     var domEl=document.getElementById('i_dom');
     var cmtEl=document.getElementById('i_cmt');
-    var str=strEl?strEl.value:'';
+        var str=strEl?strEl.value:'';
     var hou=houEl?houEl.value:'';
     var apt=aptEl?aptEl.value:'';
     var fl=flEl?flEl.value:'';
@@ -438,12 +438,123 @@ function getDD(){
     if(apt)addr+=', кв.'+apt;
     if(fl)addr+=', эт.'+fl;
     if(dom)addr+=', домофон: '+dom;
-	if(cmt)addr+='. Комментарий: '+cmt;
+    if(cmt)addr+='. Комментарий: '+cmt;
     return{ty:ty,m:'Курьер СПб',cn:'',sm:'',a:addr,p:pt,disc:disc,discAmt:discAmt,finalSum:finalSum,origSum:origSum,nm:nm,em:em,ph:ph};
   }
   return null;
 }
 
+function setNativeValue(el,val){
+  var setter=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;
+  setter.call(el,val);
+  el.dispatchEvent(new Event('input',{bubbles:true}));
+  el.dispatchEvent(new Event('change',{bubbles:true}));
+  el.dispatchEvent(new Event('blur',{bubbles:true}));
+}
+
+function fillTildaForm(d){
+  var form=document.getElementById(FORM_ID);
+  if(!form)return false;
+
+  var groups=form.querySelectorAll('.t-input-group');
+  groups.forEach(function(g){
+    g.style.setProperty('height','auto','important');
+    g.style.setProperty('overflow','visible','important');
+    g.style.setProperty('opacity','1','important');
+    g.style.setProperty('pointer-events','auto','important');
+  });
+
+  var fName=form.querySelector('input[name="name"]');
+  if(fName)setNativeValue(fName,d.nm);
+
+  var fEmail=form.querySelector('input[name="email"]');
+  if(fEmail)setNativeValue(fEmail,d.em);
+
+  var fPhone=form.querySelector('input[name="phone"]');
+  if(fPhone)setNativeValue(fPhone,d.ph);
+
+  var dlvText=d.m;
+  if(d.cn)dlvText+=' - '+d.cn;
+  if(d.sm)dlvText+=' ('+d.sm+')';
+
+  var fDlv=form.querySelector('input[name="delivery"]');
+  if(fDlv)setNativeValue(fDlv,dlvText);
+
+  var fAddr=form.querySelector('input[name="address"]');
+  if(fAddr)setNativeValue(fAddr,d.a||'');
+
+  var fComm=form.querySelector('input[name="comment"]');
+  if(fComm){
+    var commText='Оплата: '+d.p;
+    if(d.disc)commText+=' | Скидка: '+d.discAmt+' руб. | Итого: '+d.finalSum+' руб.';
+    setNativeValue(fComm,commText);
+  }
+
+  var payText='Оплата: '+d.p;
+  if(d.disc)payText+=' | Скидка: '+d.discAmt+' руб. | Итого: '+d.finalSum+' руб.';
+
+  var fSpec=form.querySelector('[name="form-spec-comments"]');
+  if(fSpec)setNativeValue(fSpec,d.nm+' | '+d.ph+' | '+d.em+' | '+dlvText+(d.a?' | '+d.a:'')+' | '+payText);
+
+  return true;
+}
+
+function inject(){
+  if(!validate())return false;
+  var d=getDD();
+  if(!d)return false;
+  var ok=fillTildaForm(d);
+  if(!ok){console.warn('Форма не найдена');return false;}
+  _injecting=true;
+
+  setTimeout(function(){
+    var form=document.getElementById(FORM_ID);
+    if(!form){_injecting=false;return;}
+
+    form.querySelectorAll('.t-input-error').forEach(function(e){e.style.display='none';});
+    form.querySelectorAll('.js-error-control-box').forEach(function(e){e.style.display='none';});
+    form.querySelectorAll('.t-form__errorbox-middle').forEach(function(e){e.style.display='none';});
+
+    var btn=form.querySelector('button.t-submit,button[type="submit"]');
+    if(!btn){_injecting=false;return;}
+
+    btn.style.cssText='position:static!important;opacity:1!important;pointer-events:auto!important;height:auto!important;overflow:visible!important;';
+    btn.disabled=false;
+
+    var groups=form.querySelectorAll('.t-input-group');
+    groups.forEach(function(g){
+      g.style.setProperty('height','auto','important');
+      g.style.setProperty('overflow','visible','important');
+      g.style.setProperty('opacity','1','important');
+      g.style.setProperty('pointer-events','auto','important');
+    });
+
+    if(d.disc)applyPromo();
+
+    setTimeout(function(){
+      var fName=form.querySelector('input[name="name"]');
+      if(fName)setNativeValue(fName,d.nm);
+      var fEmail=form.querySelector('input[name="email"]');
+      if(fEmail)setNativeValue(fEmail,d.em);
+      var fPhone=form.querySelector('input[name="phone"]');
+      if(fPhone)setNativeValue(fPhone,d.ph);
+
+      btn.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));
+    },d.disc?1500:200);
+
+    setTimeout(function(){
+      groups.forEach(function(g){
+        g.style.setProperty('height','0','important');
+        g.style.setProperty('overflow','hidden','important');
+        g.style.setProperty('opacity','0','important');
+        g.style.setProperty('pointer-events','none','important');
+      });
+      hideTildaSubmit();
+      _injecting=false;
+    },5000);
+  },150);
+  return 'handled';
+}
 
 function unlockScroll(){
   document.body.style.overflow='';
@@ -550,126 +661,6 @@ function bindAll(){
   initDD('i_pvz','dd-pvz');
   initDD('i_tkc','dd-tkc');
   updPay();
-}
-
-function setNativeValue(el, val) {
-  var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-  setter.call(el, val);
-  el.dispatchEvent(new Event('input', {bubbles: true}));
-  el.dispatchEvent(new Event('change', {bubbles: true}));
-  el.dispatchEvent(new Event('blur', {bubbles: true}));
-}
-
-function fillTildaForm(d) {
-  var form = document.getElementById(FORM_ID);
-  if (!form) return false;
-
-  // Временно показываем input-group чтобы Tilda их увидела
-  var groups = form.querySelectorAll('.t-input-group');
-  groups.forEach(function(g) {
-    g.style.setProperty('height', 'auto', 'important');
-    g.style.setProperty('overflow', 'visible', 'important');
-    g.style.setProperty('opacity', '1', 'important');
-    g.style.setProperty('pointer-events', 'auto', 'important');
-  });
-
-  var fName = form.querySelector('input[name="name"]');
-  if (fName) setNativeValue(fName, d.nm);
-
-  var fEmail = form.querySelector('input[name="email"]');
-  if (fEmail) setNativeValue(fEmail, d.em);
-
-  var fPhone = form.querySelector('input[name="phone"]');
-  if (fPhone) setNativeValue(fPhone, d.ph);
-
-  var dlvText = d.m;
-  if (d.cn) dlvText += ' - ' + d.cn;
-  if (d.sm) dlvText += ' (' + d.sm + ')';
-
-  var fDlv = form.querySelector('input[name="delivery"]');
-  if (fDlv) setNativeValue(fDlv, dlvText);
-
-  var fAddr = form.querySelector('input[name="address"]');
-  if (fAddr) setNativeValue(fAddr, d.a || '');
-
-  var fComm = form.querySelector('input[name="comment"]');
-  if (fComm) {
-    var commText = 'Оплата: ' + d.p;
-    if (d.disc) commText += ' | Скидка: ' + d.discAmt + ' руб. | Итого: ' + d.finalSum + ' руб.';
-    if (d.promoCode) commText += ' | Промокод: ' + d.promoCode;
-    setNativeValue(fComm, commText);
-  }
-
-  var payText = 'Оплата: ' + d.p;
-  if (d.disc) payText += ' | Скидка: ' + d.discAmt + ' руб. | Итого: ' + d.finalSum + ' руб.';
-  if (d.promoCode) payText += ' | Промокод: ' + d.promoCode;
-
-  var fSpec = form.querySelector('[name="form-spec-comments"]');
-  if (fSpec) setNativeValue(fSpec, d.nm + ' | ' + d.ph + ' | ' + d.em + ' | ' + dlvText + (d.a ? ' | ' + d.a : '') + ' | ' + payText);
-
-  return true;
-}
-
-function inject() {
-  if (!validate()) return false;
-  var d = getDD();
-  if (!d) return false;
-  var ok = fillTildaForm(d);
-  if (!ok) { console.warn('Форма не найдена'); return false; }
-  _injecting = true;
-
-  setTimeout(function() {
-    var form = document.getElementById(FORM_ID);
-    if (!form) { _injecting = false; return; }
-
-    // Убираем все ошибки Tilda которые могли появиться
-    form.querySelectorAll('.t-input-error').forEach(function(e) { e.style.display = 'none'; });
-    form.querySelectorAll('.js-error-control-box').forEach(function(e) { e.style.display = 'none'; });
-    form.querySelectorAll('.t-form__errorbox-middle').forEach(function(e) { e.style.display = 'none'; });
-
-    var btn = form.querySelector('button.t-submit,button[type="submit"]');
-    if (!btn) { _injecting = false; return; }
-
-    // Полностью разблокируем кнопку
-    btn.style.cssText = 'position:static!important;opacity:1!important;pointer-events:auto!important;height:auto!important;overflow:visible!important;';
-    btn.disabled = false;
-
-    // Также разблокируем input-group на момент отправки
-    var groups = form.querySelectorAll('.t-input-group');
-    groups.forEach(function(g) {
-      g.style.setProperty('height', 'auto', 'important');
-      g.style.setProperty('overflow', 'visible', 'important');
-      g.style.setProperty('opacity', '1', 'important');
-      g.style.setProperty('pointer-events', 'auto', 'important');
-    });
-
-    if (d.disc) applyPromo();
-
-    setTimeout(function() {
-      // Ещё раз перезаписываем значения прямо перед кликом
-      var fName = form.querySelector('input[name="name"]');
-      if (fName) setNativeValue(fName, d.nm);
-      var fEmail = form.querySelector('input[name="email"]');
-      if (fEmail) setNativeValue(fEmail, d.em);
-      var fPhone = form.querySelector('input[name="phone"]');
-      if (fPhone) setNativeValue(fPhone, d.ph);
-
-      btn.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true, view: window}));
-    }, d.disc ? 1500 : 200);
-
-    setTimeout(function() {
-      // Прячем обратно
-      groups.forEach(function(g) {
-        g.style.setProperty('height', '0', 'important');
-        g.style.setProperty('overflow', 'hidden', 'important');
-        g.style.setProperty('opacity', '0', 'important');
-        g.style.setProperty('pointer-events', 'none', 'important');
-      });
-      hideTildaSubmit();
-      _injecting = false;
-    }, 5000);
-  }, 150);
-  return 'handled';
 }
 
 function initDD(iid,sid){
